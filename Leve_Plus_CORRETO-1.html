@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#416b50">
+<meta name="description" content="Leve+ — seu novo ritmo. Seu novo você.">
+<link rel="manifest" href="manifest.json">
+<title>Leve+</title>
+<style>
+:root{--green:#416b50;--green2:#6f9877;--cream:#fbf7f2;--pink:#f4dfdc;--text:#24352a;--muted:#718078;--white:#fff;--line:#e9e2dc;--danger:#b44d4d}
+*{box-sizing:border-box}body{margin:0;background:#eee9e4;font-family:Arial,sans-serif;color:var(--text)}
+button,input,select{font:inherit}.app{max-width:430px;min-height:100vh;margin:auto;background:var(--cream);position:relative}
+header{padding:20px 20px 8px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:rgba(251,247,242,.96);z-index:4}
+.logo{font-family:Georgia,serif;font-size:29px;color:var(--green)}.logo small{font-family:Arial;font-size:10px;display:block;color:var(--muted)}
+main{padding:8px 18px 100px}.screen{display:none}.screen.active{display:block}
+.hello{font-size:25px;font-weight:700;margin:10px 0 3px}.sub,.muted{color:var(--muted);font-size:13px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 3px 14px #5d493d0b}.row{display:flex;justify-content:space-between;align-items:center;gap:12px}.icon{width:42px;height:42px;border-radius:13px;background:#e4efdf;display:grid;place-items:center;font-size:21px}.title{font-weight:700}.btn{border:0;border-radius:13px;background:var(--green);color:#fff;padding:13px 18px;font-weight:700;cursor:pointer;width:100%;margin-top:12px}.btn.secondary{background:var(--pink);color:var(--green)}.btn.danger{background:#f5dddd;color:var(--danger)}.progress{height:8px;background:#eeeae5;border-radius:8px;overflow:hidden;margin-top:10px}.progress i{display:block;height:100%;background:var(--green2);border-radius:8px}
+.tabs{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);height:76px;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;z-index:5}.tab{border:0;background:none;color:#7b837e;font-size:10px;display:flex;flex-direction:column;gap:4px;align-items:center;cursor:pointer}.tab.active{color:var(--green);font-weight:700}.tab b{font-size:21px}
+h2{font-size:21px;margin:18px 0 5px}h3{font-size:16px;margin:5px 0}.hero{background:linear-gradient(135deg,#e4efdf,#f6e5e2);border-radius:22px;padding:20px;margin:14px 0}.timer{font-size:40px;font-weight:700;text-align:center;color:var(--green);margin:12px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pill{padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:12px;text-align:center;cursor:pointer}.pill.selected{background:#e4efdf;border-color:#b8d0bb;color:var(--green);font-weight:700}
+.input,.select{width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;background:#fff;margin:7px 0;outline:none}.recipe-img,.workout-img{height:145px;border-radius:16px;background:linear-gradient(135deg,#d8c4aa,#f0ddd0);display:grid;place-items:center;font-size:54px;margin-bottom:14px}.check{display:flex;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid #eee}.check input{accent-color:var(--green)}.stat{font-size:28px;font-weight:700}.notice{background:#fff4e8;border:1px solid #f0ddc6;padding:12px;border-radius:14px;font-size:12px;line-height:1.4}.smallbtn{border:0;background:#edf3ed;color:var(--green);padding:8px 10px;border-radius:10px;font-weight:700}.empty{padding:25px;text-align:center;color:var(--muted)}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="logo">Leve+<small>Seu novo ritmo. Seu novo você.</small></div>
+  <button class="smallbtn" id="installBtn" hidden>Instalar</button>
+</header>
+
+<main>
+<section id="home" class="screen active">
+  <div class="hello" id="hello">Bom dia! 🌿</div>
+  <div class="sub">Seu plano de hoje está pronto.</div>
+  <div class="card row"><div class="row"><div class="icon">⏱️</div><div><div class="title">Jejum</div><div class="muted" id="homeFast">Nenhum jejum ativo</div></div></div><button class="smallbtn" onclick="show('jejum')">Abrir</button></div>
+  <div class="card row"><div><div class="title">🍽️ Próxima refeição</div><div class="muted">Sua janela alimentar é personalizada no plano.</div></div><span>›</span></div>
+  <div class="card"><div class="row"><div><div class="title">🥗 Receita do dia</div><div class="muted" id="homeRecipe">Carregando...</div></div><span>›</span></div><button class="btn secondary" onclick="show('receitas')">Ver receita</button></div>
+  <div class="card"><div class="row"><div><div class="title">🏋️ Treino do dia</div><div class="muted">Treino inicial · 20–25 min</div></div><button class="smallbtn" onclick="show('treinos')">Abrir</button></div></div>
+  <div class="card"><div class="title">💧 Água</div><div class="muted"><span id="waterText">0</span> ml / <span id="waterGoal">2000</span> ml</div><div class="progress"><i id="waterBar" style="width:0%"></i></div><button class="btn" onclick="addWater(250)">+ 250 ml</button></div>
+  <div class="card"><div class="row"><div><div class="title">📊 Seu progresso</div><div class="muted">Dias ativos: <span id="activeDays">0</span></div></div><strong id="progressPct">0%</strong></div><div class="progress"><i id="progressBar" style="width:0%"></i></div></div>
+</section>
+
+<section id="jejum" class="screen">
+<h2>Jejum intermitente</h2><div class="sub">Escolha um protocolo e acompanhe o tempo.</div>
+<div class="notice" style="margin-top:12px">Jejum não é adequado para todas as pessoas. O app não substitui avaliação médica ou nutricional. Se você tiver uma condição de saúde, usar medicamentos que exigem alimentação, estiver grávida/amamentando ou tiver histórico de transtorno alimentar, procure orientação profissional antes de usar protocolos de jejum.</div>
+<div class="hero"><div style="text-align:center;font-weight:700" id="fastStatus">JEJUM PARADO</div><div class="timer" id="timer">00:00:00</div><div class="row"><small>Início<br><b id="fastStart">—</b></small><small>Fim<br><b id="fastEnd">—</b></small></div></div>
+<div class="card"><div class="title">Protocolo</div><div class="grid" style="margin-top:12px">
+<button class="pill" data-fast="12" onclick="selectFast(12)">12:12</button><button class="pill" data-fast="14" onclick="selectFast(14)">14:10</button><button class="pill" data-fast="16" onclick="selectFast(16)">16:8</button><button class="pill" data-fast="custom" onclick="selectFast('custom')">Personalizado</button></div>
+<div id="customFast" hidden><input class="input" id="customHours" type="number" min="1" max="23" placeholder="Horas de jejum"></div></div>
+<button class="btn" id="fastBtn" onclick="toggleFast()">Iniciar jejum</button><button class="btn secondary" onclick="resetFast()">Encerrar / zerar</button>
+<div class="card"><h3>Histórico</h3><div id="fastHistory" class="muted">Nenhum jejum concluído ainda.</div></div>
+</section>
+
+<section id="receitas" class="screen">
+<h2>Receitas Fitness</h2><input class="input" id="recipeSearch" placeholder="🔎 Buscar receitas..." oninput="renderRecipes()">
+<div class="grid" id="recipeCats"></div><div id="recipeList"></div>
+</section>
+
+<section id="treinos" class="screen">
+<h2>Treino do dia</h2><div class="sub">Movimente-se no seu ritmo.</div>
+<div class="card"><div class="workout-img">🏋️‍♀️</div><h3>Treino iniciante em casa</h3><div class="muted">20 minutos · sem equipamentos</div><button class="btn" id="workoutBtn" onclick="startWorkout()">Começar treino</button></div>
+<div id="exerciseList"></div>
+</section>
+
+<section id="evolucao" class="screen">
+<h2>Minha evolução</h2>
+<div class="card"><div class="muted">Peso atual</div><div class="row"><span class="stat" id="currentWeight">—</span><span id="weightChange"></span></div></div>
+<div class="card"><h3>Registrar peso</h3><input class="input" id="weightInput" type="number" step="0.1" placeholder="Ex.: 68,9"><button class="btn" onclick="saveWeight()">Salvar peso</button></div>
+<div class="grid"><div class="card"><div class="muted">Treinos</div><div class="stat" id="workoutCount">0</div></div><div class="card"><div class="muted">Jejuns</div><div class="stat" id="fastCount">0</div></div></div>
+<div class="card"><h3>Histórico de peso</h3><div id="weightHistory" class="muted"></div></div>
+</section>
+
+<section id="perfil" class="screen">
+<h2>Meu perfil</h2>
+<div class="card"><input class="input" id="nameInput" placeholder="Seu nome"><input class="input" id="ageInput" type="number" placeholder="Idade"><input class="input" id="heightInput" type="number" step="0.01" placeholder="Altura em metros"><input class="input" id="goalInput" type="number" step="0.1" placeholder="Meta de peso (kg)"><input class="input" id="waterGoalInput" type="number" placeholder="Meta de água (ml)"><button class="btn" onclick="saveProfile()">Salvar perfil</button></div>
+<div class="card"><div class="title">⭐ Plano Premium</div><div class="muted">Desbloqueie receitas, treinos e recursos avançados por R$ 9,90/mês.</div><div id="premiumAuth" hidden style="margin-top:12px"><input class="input" id="authEmail" type="email" placeholder="Seu e-mail"><input class="input" id="authPassword" type="password" placeholder="Senha (mín. 6 caracteres)"><div class="row" style="gap:8px"><button class="btn" onclick="signInForPremium()">Entrar</button><button class="btn secondary" onclick="signUpForPremium()">Criar conta</button></div></div><button class="btn" id="premiumBtn" onclick="startPremiumCheckout()">Assinar Premium</button><div id="premiumMsg" class="muted" style="margin-top:8px"></div></div>
+<div class="card"><button class="btn danger" onclick="clearData()">Apagar dados deste aparelho</button></div>
+</section>
+</main>
+
+<nav class="tabs">
+<button class="tab active" onclick="show('home',this)"><b>⌂</b>Início</button>
+<button class="tab" onclick="show('receitas',this)"><b>♧</b>Receitas</button>
+<button class="tab" onclick="show('treinos',this)"><b>♢</b>Treinos</button>
+<button class="tab" onclick="show('evolucao',this)"><b>↗</b>Evolução</button>
+<button class="tab" onclick="show('perfil',this)"><b>♙</b>Perfil</button>
+</nav>
+</div>
+
+<script>
+const SUPABASE_URL='https://xooedwctuasufsmgedxk.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_5snpibZDCpfoyTthHmR3DQ_avsLe8sa';
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+
+async function startPremiumCheckout(){
+  const btn=document.getElementById('premiumBtn');
+  const msg=document.getElementById('premiumMsg');
+  btn.disabled=true;
+  btn.textContent='Abrindo checkout...';
+  msg.textContent='';
+  try{
+    const {data:{session}}=await supabaseClient.auth.getSession();
+    if(!session){
+      document.getElementById('premiumAuth').hidden=false;
+      msg.textContent='Entre ou crie sua conta para continuar.';
+      btn.disabled=false; btn.textContent='Assinar Premium';
+      return;
+    }
+    const {data,error}=await supabaseClient.functions.invoke('create-leveplus-checkout',{
+      body:{}
+    });
+    if(error) throw error;
+    if(data?.error==='already_premium'){
+      msg.textContent='Sua conta já possui o Premium.';
+      btn.disabled=false; btn.textContent='Premium ativo';
+      return;
+    }
+    if(!data?.checkout_url) throw new Error('Não foi possível criar o Checkout.');
+    window.location.href=data.checkout_url;
+  }catch(e){
+    console.error(e);
+    msg.textContent='Não foi possível abrir o pagamento. Tente novamente.';
+    btn.disabled=false; btn.textContent='Assinar Premium';
+  }
+}
+
+const KEY='leveplus_v1';
+const recipes=[
+{name:'Panqueca de banana e aveia',cat:'Café da manhã',time:15,kcal:320,protein:18,emoji:'🥞',ingredients:['1 banana madura','2 ovos','4 colheres de sopa de aveia','Canela a gosto'],prep:'Amasse a banana, misture os ovos e a aveia, tempere com canela e prepare em frigideira antiaderente.'},
+{name:'Salada de frango com quinoa',cat:'Almoço',time:20,kcal:420,protein:38,emoji:'🥗',ingredients:['120 g de frango','1/2 xícara de quinoa cozida','Folhas verdes','Tomate e cenoura'],prep:'Grelhe o frango, misture com a quinoa e os vegetais e tempere a gosto.'},
+{name:'Creme de abóbora com frango',cat:'Jantar',time:25,kcal:280,protein:27,emoji:'🍲',ingredients:['250 g de abóbora','100 g de frango desfiado','Cebola e alho','Temperos'],prep:'Cozinhe a abóbora, bata até formar um creme, acrescente o frango e ajuste os temperos.'},
+{name:'Iogurte com frutas e aveia',cat:'Lanches',time:5,kcal:250,protein:15,emoji:'🍓',ingredients:['1 pote de iogurte natural','Morangos','1 colher de aveia','Canela'],prep:'Monte em uma tigela e finalize com frutas e aveia.'},
+{name:'Omelete de legumes',cat:'Café da manhã',time:10,kcal:290,protein:22,emoji:'🍳',ingredients:['2 ovos','Tomate','Espinafre','Queijo branco opcional'],prep:'Bata os ovos, acrescente os vegetais e cozinhe em fogo baixo.'}
+];
+const exercises=[['Agachamento','3 séries · 12 repetições'],['Afundo alternado','3 séries · 10 por perna'],['Elevação pélvica','3 séries · 15 repetições'],['Abdução de quadril','3 séries · 15 repetições'],['Panturrilha','3 séries · 20 repetições']];
+let data=JSON.parse(localStorage.getItem(KEY)||'{}');
+data.profile=data.profile||{}; data.water=data.water||0; data.waterDate=data.waterDate||today(); data.weights=data.weights||[]; data.fastHistory=data.fastHistory||[]; data.workouts=data.workouts||0; data.activeDays=data.activeDays||0; data.fast=data.fast||null; data.recipeFav=data.recipeFav||[];
+if(data.waterDate!==today()){data.water=0;data.waterDate=today();save();}
+async function signInForPremium(){
+  const email=document.getElementById('authEmail').value.trim();
+  const password=document.getElementById('authPassword').value;
+  const msg=document.getElementById('premiumMsg');
+  if(!email||!password){msg.textContent='Informe e-mail e senha.';return;}
+  msg.textContent='Entrando...';
+  const {error}=await supabaseClient.auth.signInWithPassword({email,password});
+  if(error){msg.textContent='Não foi possível entrar: '+error.message;return;}
+  document.getElementById('premiumAuth').hidden=true;
+  msg.textContent='Conta conectada. Abrindo o Premium...';
+  startPremiumCheckout();
+}
+
+async function signUpForPremium(){
+  const email=document.getElementById('authEmail').value.trim();
+  const password=document.getElementById('authPassword').value;
+  const msg=document.getElementById('premiumMsg');
+  if(!email||password.length<6){msg.textContent='Informe um e-mail e uma senha com pelo menos 6 caracteres.';return;}
+  msg.textContent='Criando sua conta...';
+  const {data,error}=await supabaseClient.auth.signUp({email,password});
+  if(error){msg.textContent='Não foi possível criar a conta: '+error.message;return;}
+  if(data.session){
+    document.getElementById('premiumAuth').hidden=true;
+    msg.textContent='Conta criada. Abrindo o Premium...';
+    startPremiumCheckout();
+  }else{
+    msg.textContent='Conta criada. Verifique seu e-mail para confirmar a conta e depois entre aqui.';
+  }
+}
+
+function today(){return new Date().toISOString().slice(0,10)}
+function save(){localStorage.setItem(KEY,JSON.stringify(data))}
+function show(id,el){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));if(el)el.classList.add('active');else{let map={home:0,receitas:1,treinos:2,evolucao:3,perfil:4};document.querySelectorAll('.tab')[map[id]||0].classList.add('active')}window.scrollTo(0,0);refresh();}
+function refresh(){
+document.getElementById('hello').textContent=(data.profile.name?'Olá, '+data.profile.name+'! 🌿':'Bom dia! 🌿');
+let goal=Number(data.profile.waterGoal)||2000; document.getElementById('waterGoal').textContent=goal; document.getElementById('waterText').textContent=data.water; document.getElementById('waterBar').style.width=Math.min(100,data.water/goal*100)+'%';
+document.getElementById('activeDays').textContent=data.activeDays;let pct=Math.min(100,data.activeDays/7*100);document.getElementById('progressPct').textContent=Math.round(pct)+'%';document.getElementById('progressBar').style.width=pct+'%';
+document.getElementById('homeRecipe').textContent=recipes[new Date().getDate()%recipes.length].name;
+renderFast();renderRecipes();renderExercises();renderEvolution();fillProfile();
+}
+function addWater(n){data.water+=n;data.activeDays=Math.max(data.activeDays,data.water>0?Math.min(7,data.activeDays+1):data.activeDays);save();refresh()}
+function selectFast(hours){document.querySelectorAll('[data-fast]').forEach(b=>b.classList.toggle('selected',String(b.dataset.fast)===String(hours)));document.getElementById('customFast').hidden=hours!=='custom';data.selectedFast=hours;save()}
+function toggleFast(){if(data.fast){alert('Seu jejum já está em andamento.');return}let h=data.selectedFast==='custom'?Number(document.getElementById('customHours').value):Number(data.selectedFast)||14;if(!h||h<1||h>23){alert('Escolha um período válido.');return}let start=Date.now(),end=start+h*3600000;data.fast={start,end,h};save();refresh()}
+function resetFast(){if(data.fast&&Date.now()>=data.fast.end){data.fastHistory.unshift({date:today(),hours:data.fast.h});data.fastHistory=data.fastHistory.slice(0,30)}data.fast=null;save();refresh()}
+function renderFast(){let f=data.fast;document.getElementById('fastCount').textContent=data.fastHistory.length;if(!f){document.getElementById('timer').textContent='00:00:00';document.getElementById('fastStatus').textContent='JEJUM PARADO';document.getElementById('fastStart').textContent='—';document.getElementById('fastEnd').textContent='—';document.getElementById('fastBtn').textContent='Iniciar jejum';document.getElementById('homeFast').textContent='Nenhum jejum ativo';return}let remaining=Math.max(0,f.end-Date.now());if(remaining===0){document.getElementById('fastStatus').textContent='JEJUM CONCLUÍDO';document.getElementById('fastBtn').textContent='Concluído — encerrar';}else{document.getElementById('fastStatus').textContent='JEJUM EM ANDAMENTO';document.getElementById('fastBtn').textContent='Jejum em andamento';}document.getElementById('timer').textContent=formatMs(remaining);document.getElementById('fastStart').textContent=new Date(f.start).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});document.getElementById('fastEnd').textContent=new Date(f.end).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});document.getElementById('homeFast').textContent=remaining?formatMs(remaining)+' restantes':'Jejum concluído';document.getElementById('fastHistory').innerHTML=data.fastHistory.length?data.fastHistory.map(x=>'✓ '+x.date+' · '+x.hours+'h').join('<br>'):'Nenhum jejum concluído ainda.'}
+function formatMs(ms){let s=Math.floor(ms/1000),h=Math.floor(s/3600);s%=3600;let m=Math.floor(s/60);s%=60;return [h,m,s].map(x=>String(x).padStart(2,'0')).join(':')}
+setInterval(()=>{if(data.fast){renderFast();}},1000)
+function renderRecipes(){let q=(document.getElementById('recipeSearch')?.value||'').toLowerCase();let list=recipes.filter(r=>(r.name+' '+r.cat).toLowerCase().includes(q));document.getElementById('recipeCats').innerHTML=['Todas','Café da manhã','Almoço','Jantar','Lanches'].map(c=>`<button class="pill" onclick="filterRecipe('${c}')">${c}</button>`).join('');document.getElementById('recipeList').innerHTML=list.map((r,i)=>`<div class="card"><div class="recipe-img">${r.emoji}</div><h3>${r.name}</h3><div class="muted">${r.kcal} kcal · ${r.protein}g proteína · ${r.time} min</div><details style="margin-top:12px"><summary><b>Ver receita</b></summary><p><b>Ingredientes:</b><br>${r.ingredients.join('<br>')}</p><p><b>Preparo:</b> ${r.prep}</p></details><button class="btn secondary" onclick="favoriteRecipe(${recipes.indexOf(r)})">${data.recipeFav.includes(recipes.indexOf(r))?'♥ Favorita':'♡ Favoritar'}</button></div>`).join('')||'<div class="empty">Nenhuma receita encontrada.</div>'}
+function filterRecipe(cat){document.getElementById('recipeSearch').value=cat==='Todas'?'':cat;renderRecipes()}
+function favoriteRecipe(i){data.recipeFav=data.recipeFav.includes(i)?data.recipeFav.filter(x=>x!==i):[...data.recipeFav,i];save();renderRecipes()}
+function renderExercises(){document.getElementById('exerciseList').innerHTML=exercises.map((e,i)=>`<div class="card"><div class="row"><div><h3>${i+1}. ${e[0]}</h3><div class="muted">${e[1]}</div></div><span>›</span></div></div>`).join('')}
+function startWorkout(){data.workouts++;data.activeDays=Math.max(data.activeDays,Math.min(7,data.workouts));save();document.getElementById('workoutBtn').textContent='Treino registrado ✓';refresh();setTimeout(()=>document.getElementById('workoutBtn').textContent='Começar treino',1500)}
+function saveWeight(){let w=Number(document.getElementById('weightInput').value);if(!w||w<20||w>300){alert('Informe um peso válido.');return}data.weights.push({date:today(),weight:w});data.weights=data.weights.slice(-90);save();document.getElementById('weightInput').value='';refresh()}
+function renderEvolution(){let last=data.weights[data.weights.length-1];let first=data.weights[0];document.getElementById('currentWeight').textContent=last?last.weight.toFixed(1)+' kg':'—';document.getElementById('weightChange').textContent=last&&first?((last.weight-first.weight).toFixed(1)+' kg desde o início'):'';document.getElementById('workoutCount').textContent=data.workouts;document.getElementById('fastCount').textContent=data.fastHistory.length;document.getElementById('weightHistory').innerHTML=data.weights.length?data.weights.slice().reverse().map(x=>x.date+' · '+x.weight.toFixed(1)+' kg').join('<br>'):'Nenhum peso registrado.'}
+function saveProfile(){data.profile={name:document.getElementById('nameInput').value.trim(),age:Number(document.getElementById('ageInput').value)||'',height:Number(document.getElementById('heightInput').value)||'',goal:Number(document.getElementById('goalInput').value)||'',waterGoal:Number(document.getElementById('waterGoalInput').value)||2000};save();refresh();alert('Perfil salvo!')}
+function fillProfile(){let p=data.profile;document.getElementById('nameInput').value=p.name||'';document.getElementById('ageInput').value=p.age||'';document.getElementById('heightInput').value=p.height||'';document.getElementById('goalInput').value=p.goal||'';document.getElementById('waterGoalInput').value=p.waterGoal||2000}
+function clearData(){if(confirm('Apagar todos os dados deste aparelho?')){localStorage.removeItem(KEY);location.reload()}}
+let deferredPrompt;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('installBtn').hidden=false});document.getElementById('installBtn').onclick=async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();deferredPrompt=null};
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+selectFast(data.selectedFast||14);refresh();
+</script>
+</body></html>
